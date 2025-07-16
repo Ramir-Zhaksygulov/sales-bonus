@@ -336,3 +336,16 @@ function bonusStableGrowth({ recordsBySeller, calculateRevenue, products }) {
     bonus: +(bestSeller ? bestSeller.avgProfit * 0.15 : 0).toFixed(2),
   };
 }
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    calculateSimpleRevenue,
+    calculateBonusByProfit,
+    analyzeSalesData,
+    bonusBestCustomer,
+    bonusCustomerRetention,
+    bonusLargestSingleSale,
+    bonusHighestAverageProfit,
+    bonusStableGrowth,
+  };
+}
