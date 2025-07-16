@@ -14,22 +14,6 @@ function groupBy(array, keyFn) {
   }, {});
 }
 
-// Группировка данных
-const recordsBySeller = groupBy(
-  data.purchase_records,
-  (record) => record.seller_id
-);
-
-const recordsByCustomer = groupBy(
-  data.purchase_records,
-  (record) => record.customer_id
-);
-
-const recordsByProduct = groupBy(
-  data.purchase_records.flatMap((record) => record.items),
-  (item) => item.sku
-);
-
 /**
  * Вычисление среднего значения
  * @param values
