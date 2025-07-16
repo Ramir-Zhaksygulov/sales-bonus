@@ -1,10 +1,6 @@
 /**
  * Группировка массива по ключу
- * @param array
- * @param keyFn
- * @returns {*}
  */
-
 function groupBy(array, keyFn) {
   return array.reduce((acc, item) => {
     const key = keyFn(item);
@@ -16,38 +12,28 @@ function groupBy(array, keyFn) {
 
 /**
  * Вычисление среднего значения
- * @param values
- * @returns {number}
  */
-
 function calculateAverage(values) {
   const sum = values.reduce((acc, value) => acc + value, 0);
   return sum / values.length || 0;
 }
 
 /**
- * @param sequence - массив чисел (последовательность)
- * @param tolerance - допустимое относительное изменение между соседними элементами последовательности для того, чтобы считать ее стабильной (по умолчанию 0.05, то есть 5%)
- * @returns {{isIncreasing: boolean, isDecreasing: boolean, isStable: boolean}}
+ * Анализ последовательности на стабильность и рост
  */
-
 function analyzSequence(sequence, tolerance = 0.05) {
-  // Инициализация объекта для хранения результатов анализа
   const trends = {
     isStable: true,
     isIncreasing: false,
     isDecreasing: false,
   };
 
-  if (sequence.length < 2) {
-    return trends;
-  }
+  if (sequence.length < 2) return trends;
 
   const start = sequence[0];
   const end = sequence[sequence.length - 1];
-  const totalChange = end - start; // Общее изменение между первым и последним значением
+  const totalChange = end - start;
 
-  // Проверяем стабильность: каждое значение должно быть в пределах tolerance от предыдущего
   for (let i = 1; i < sequence.length; i++) {
     const relativeChange =
       Math.abs(sequence[i] - sequence[i - 1]) / Math.abs(sequence[i - 1]);
@@ -57,7 +43,6 @@ function analyzSequence(sequence, tolerance = 0.05) {
     }
   }
 
-  // Подверка на рост или падение: если общее изменение больше 0 - это рост, если меньше 0 - падение
   trends.isIncreasing = totalChange > 0;
   trends.isDecreasing = totalChange < 0;
 
@@ -65,29 +50,20 @@ function analyzSequence(sequence, tolerance = 0.05) {
 }
 
 /**
- * Функция для расчета прибыли
- * @param item
- * @param product
- * @returns {number}
+ * Выручка без учета закупа
  */
-
 function calculateSimpleRevenue(item, product) {
-  return (
-    item.sale_price * item.quantity * (1 - item.discount / 100) -
-    product.purchase_price * item.quantity
-  );
+  return item.sale_price * item.quantity * (1 - item.discount / 100);
 }
 
 /**
- * Накопительное вычисление прибыли, выручки и других метрик
- * @param records
- * @param calculateRevenue
- * @param products
- * @returns {*}
+ * Расчет бонусов по прибыли
  */
+function calculateBonusByProfit(records = [], calculateRevenue, products = []) {
+  if (!Array.isArray(records)) {
+    throw new TypeError("records должен быть массивом");
+  }
 
-function calculateBonusByProfit(records, calculateRevenue, products) {
-  // Принимает начальное значение аккумулятора { sellers: {}, customers: {}, products: {} } содержит статистику, сгрупированную по продавцам, покупателям и продуктам
   return records.reduce(
     (acc, record) => {
       const sellerId = record.seller_id;
@@ -108,27 +84,23 @@ function calculateBonusByProfit(records, calculateRevenue, products) {
           sellers: new Set(),
         };
 
-      // Для каждого товара в record.items, находит соответствующий продукт в массиве products и рассчитывает прибыль товара
       record.items.forEach((item) => {
-        // Находит соответствующий продукт в массиве products
         const product = products.find((p) => p.sku === item.sku);
-        // Рассчитывает прибыль для товара
-        const profit = calculateRevenue(item, product);
+        const profit =
+          item.sale_price * item.quantity * (1 - item.discount / 100) -
+          product.purchase_price * item.quantity;
 
-        // Обновление статистики продавца
         acc.sellers[sellerId].revenue +=
           item.sale_price * item.quantity * (1 - item.discount / 100);
         acc.sellers[sellerId].profit += profit;
         acc.sellers[sellerId].items.push(item);
         acc.sellers[sellerId].customers.add(customerId);
 
-        // Обновление статистики покупателя
         acc.customers[customerId].revenue +=
           item.sale_price * item.quantity * (1 - item.discount / 100);
         acc.customers[customerId].profit += profit;
         acc.customers[customerId].sellers.add(sellerId);
 
-        // Обновление статистики по продуктам
         if (!acc.products[item.sku])
           acc.products[item.sku] = { quantity: 0, revenue: 0 };
         acc.products[item.sku].quantity += item.quantity;
@@ -143,16 +115,11 @@ function calculateBonusByProfit(records, calculateRevenue, products) {
 }
 
 /**
- * Вычисление бонусов по специальным условиям
- * @param data
- * @param options {{calculateBonus: ((functions(*, *, *): *)|*), calculateRevenue: ((function(*, *): number)|*)}}
- * @param bonusFunctions
- * @returns {*}
+ * Основная функция анализа
  */
-
-function analyzeSalesData(data, options, bonusFunctions) {
+function analyzeSalesData(data, options, bonusFunctions = []) {
   const { calculateRevenue, calculateBonus } = options;
-  // Группировка данных
+
   const recordsBySeller = groupBy(
     data.purchase_records,
     (record) => record.seller_id
@@ -166,14 +133,12 @@ function analyzeSalesData(data, options, bonusFunctions) {
     (item) => item.sku
   );
 
-  // Накопительная статистика
   const stats = calculateBonus(
     data.purchase_records,
     calculateRevenue,
     data.products
   );
 
-  // Вызов функций для расчета бонусов
   return bonusFunctions.map((func) =>
     func({
       stats,
@@ -188,7 +153,8 @@ function analyzeSalesData(data, options, bonusFunctions) {
   );
 }
 
-// 1. Продавец, привлекший лучшего покупателя
+// ==== БОНУСНЫЕ ФУНКЦИИ ====
+
 function bonusBestCustomer({ stats }) {
   const bestCustomer = Object.entries(stats.customers).reduce(
     (max, [id, data]) =>
@@ -213,7 +179,6 @@ function bonusBestCustomer({ stats }) {
   };
 }
 
-// 2. Продавец лучше всего удерживающий покупателя
 function bonusCustomerRetention({ stats }) {
   const bestRetention = Object.entries(stats.sellers).reduce(
     (best, [sellerId, data]) => {
@@ -236,10 +201,9 @@ function bonusCustomerRetention({ stats }) {
   };
 }
 
-// 3. Продавец, привлекший клиента с наибольшим чеком
 function bonusLargestSingleSale({ recordsBySeller }) {
   const largestSale = Object.entries(recordsBySeller).reduce(
-    (max, [sellerId, records]) => {
+    (max, [_, records]) => {
       const largestRecord = records.reduce(
         (recordMax, record) =>
           record.total_amount > (recordMax?.total_amount || 0)
@@ -261,7 +225,6 @@ function bonusLargestSingleSale({ recordsBySeller }) {
   };
 }
 
-// 4. Продавец с наибольшей средней прибылью
 function bonusHighestAverageProfit({ stats }) {
   const bestSeller = Object.entries(stats.sellers).reduce(
     (max, [sellerId, data]) => {
@@ -278,7 +241,6 @@ function bonusHighestAverageProfit({ stats }) {
   };
 }
 
-// 5. Продавец со стабильно растущей средней прибылью
 function bonusStableGrowth({ recordsBySeller, calculateRevenue, products }) {
   const bestSeller = Object.entries(recordsBySeller).reduce(
     (best, [sellerId, records]) => {
@@ -287,7 +249,7 @@ function bonusStableGrowth({ recordsBySeller, calculateRevenue, products }) {
       );
       const monthlyAverages = Object.entries(monthlyProfits)
         .sort(([a], [b]) => new Date(a) - new Date(b))
-        .map(([month, records]) =>
+        .map(([_, records]) =>
           calculateAverage(
             records.flatMap((record) =>
               record.items.map((item) =>
@@ -321,6 +283,7 @@ function bonusStableGrowth({ recordsBySeller, calculateRevenue, products }) {
   };
 }
 
+// Экспорт
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     calculateSimpleRevenue,
