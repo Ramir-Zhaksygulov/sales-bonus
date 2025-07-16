@@ -15,27 +15,25 @@
     <script src="data/dataset_1.js"></script>
     <script src="src/main.js"></script>
     <script>
-      if (typeof window !== "undefined" && typeof data !== "undefined") {
-        console.log(data);
+      console.log(data);
 
-        const report = analyzeSalesData(
-          data,
-          {
-            calculateRevenue: calculateSimpleRevenue,
-            calculateBonus: calculateBonusByProfit,
-          },
-          [
-            bonusBestCustomer,
-            bonusCustomerRetention,
-            bonusLargestSingleSale,
-            bonusHighestAverageProfit,
-            bonusStableGrowth,
-          ]
-        );
+      const report = analyzeSalesData(
+        data,
+        {
+          calculateRevenue: calculateSimpleRevenue,
+          calculateBonus: calculateBonusByProfit,
+        },
+        [
+          bonusBestCustomer,
+          bonusCustomerRetention,
+          bonusLargestSingleSale,
+          bonusHighestAverageProfit,
+          bonusStableGrowth,
+        ]
+      );
 
-        if (console.table) console.table(report);
-        else console.log(report);
-      }
+      if (console.table) console.table(report);
+      else console.log(report);
     </script>
   </body>
 </html>
