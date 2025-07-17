@@ -17,20 +17,10 @@
     <script>
       console.log(data);
 
-      const report = analyzeSalesData(
-        data,
-        {
-          calculateRevenue: calculateSimpleRevenue,
-          calculateBonus: calculateBonusByProfit,
-        },
-        [
-          bonusBestCustomer,
-          bonusCustomerRetention,
-          bonusLargestSingleSale,
-          bonusHighestAverageProfit,
-          bonusStableGrowth,
-        ]
-      );
+      const report = analyzeSalesData(data, {
+        calculateRevenue: calculateSimpleRevenue,
+        calculateBonus: calculateBonusByProfit,
+      });
 
       if (console.table) console.table(report);
       else console.log(report);
